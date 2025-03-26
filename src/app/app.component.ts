@@ -1,18 +1,13 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject } from '@angular/core';
-import { FormArray, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { MatTableModule } from '@angular/material/table';
-import { MatFormFieldModule } from '@angular/material/form-field';
+import { Component } from '@angular/core';
+import { Validators } from '@angular/forms';
+import { TableColumn, TableComponent } from '../app/features/table/table.component';
 
-import { MatInputModule } from '@angular/material/input';
-import { MatButtonModule } from '@angular/material/button';
-import { ScrollingModule } from '@angular/cdk/scrolling';
-import { Observable, of } from 'rxjs';
-
-interface DataItem {
+interface UserData {
   id: number;
   email: string;
   cardNumber: string;
+  displayFlg: boolean;
 }
 
 @Component({
@@ -20,56 +15,22 @@ interface DataItem {
   standalone: true,
   imports: [
     CommonModule,
-    FormsModule,
-    MatButtonModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatTableModule,
-    ReactiveFormsModule,
-    ScrollingModule,
+    TableComponent
   ],
-  templateUrl: './app.component.html',
-  styleUrl: './app.component.css'
+  template: `<app-table [columns]="tableColumns" [data]="tableData"></app-table>`,
 })
 export class AppComponent {
-  displayedColumns: string[] = ['id', 'email', 'cardNumber'];
-  form: FormGroup;
-
-  private data: DataItem[] = [
-    { id: 1, email: 'user1@example.com', cardNumber: '1111-2222-3333-4444' },
-    { id: 2, email: 'user2@example.com', cardNumber: '5555-6666-7777-8888' },
-    { id: 3, email: 'user3@example.com', cardNumber: '9999-0000-1111-2222' },
+  tableColumns: TableColumn[] = [
+    { key: 'id', label: 'ID', type: 'label' },
+    { key: 'email', label: 'Email', tooltip: 'メールアドレスだよ', type: 'input', input_type: 'email', validators: [Validators.required, Validators.email] },
+    { key: 'cardNumber', label: 'カード番号', type: 'input', validators: [Validators.required, Validators.pattern(/^\d{4}-\d{4}-\d{4}-\d{4}$/)] },
+    { key: 'displayFlg', label: '表示フラグ', type: 'checkbox' },
+    { key: 'detailButton', label: '詳細', type: 'button' },
   ];
 
-  private readonly fb = inject(FormBuilder);
-
-  constructor() {
-    this.form = this.fb.group({
-      items: this.fb.array([]),
-    });
-
-    of([...this.data]).subscribe((data) => {
-      const itemsArray = this.form.get('items') as FormArray;
-      data.forEach((item) => {
-        itemsArray.push(this.createItem(item));
-      });
-    });
-  }
-
-  createItem(item: DataItem) {
-    return this.fb.group({
-      id: [item.id],
-      email: [item.email],
-      cardNumber: [item.cardNumber],
-    });
-  }
-
-  updateData() {
-    const updatedData: DataItem[] = (this.form.get('items') as FormArray).value;
-    console.log(updatedData);
-  }
-
-  get items(): FormArray {
-    return this.form.get('items') as FormArray;
-  }
+  tableData: UserData[] = [
+    { id: 1, email: 'user1@example.com', cardNumber: '1111-2222-3333-4444', displayFlg: true },
+    { id: 2, email: 'user2@example.com', cardNumber: '5555-6666-7777-8888', displayFlg: true },
+    { id: 3, email: 'user3@example.com', cardNumber: '9999-0000-1111-2222', displayFlg: false },
+  ];
 }
