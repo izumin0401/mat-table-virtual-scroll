@@ -1,6 +1,6 @@
 <div class="container">
   <div *ngIf="errorMessages.length > 0" class="error-messages">
-    <p *ngFor="let error of errorMessages" class="error-card">{{ error }}</p>
+    <p *ngFor="let errorMessage of errorMessages" class="error-card">{{ errorMessage }}</p>
   </div>
 
   <cdk-virtual-scroll-viewport itemSize="50" class="scroll-container">

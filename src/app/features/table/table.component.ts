@@ -1,13 +1,14 @@
 import { ScrollingModule } from '@angular/cdk/scrolling';
 import { CommonModule } from '@angular/common';
-import { Component, Input, OnInit } from '@angular/core';
-import { AbstractControl, FormArray, FormBuilder, FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { Component, inject, Input, OnInit } from '@angular/core';
+import { FormArray, FormBuilder, FormControl, FormGroup, ReactiveFormsModule, ValidatorFn } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { Subscription } from 'rxjs';
 
 export interface TableColumn {
   key: string;
@@ -15,7 +16,8 @@ export interface TableColumn {
   tooltip?: string;
   type: 'button' | 'checkbox' | 'input' | 'label';
   input_type?: 'text' | 'email' | 'number';
-  validators?: any[];
+  validators?: ValidatorFn[];
+  is_key?: boolean;
 }
 
 @Component({
@@ -41,20 +43,39 @@ export class TableComponent<T extends Record<string, any>> implements OnInit {
 
   displayedColumns: string[] = [];
   errorMessages: string[] = [];
-  form: FormGroup;
+  private form: FormGroup;
+  private subscriptions: Subscription[] = [];
 
-  constructor(private fb: FormBuilder) {
+  private readonly fb = inject(FormBuilder);
+
+  constructor() {
     this.form = this.fb.group({
       items: this.fb.array([]),
-    });    
+    });
   }
 
   ngOnInit() {
-    this.displayedColumns = this.columns.map(col => col.key as string);
+    this.init();
+  }
+
+  ngOnDestroy() {
+    this.subscriptions.forEach(sub => sub.unsubscribe());
+    this.subscriptions = [];
+  }
+
+  get items(): FormArray {
+    return this.form.get('items') as FormArray;
+  }
+
+  private init() {
+    this.displayedColumns = this.columns.map(col => col.key);
+
     this.data.forEach(item => {
       const group: any = {};
       this.columns.forEach(col => {
-        group[col.key] = new FormControl(item[col.key], col.validators || []);
+        if (['checkbox', 'input', 'label'].includes(col.type)) {
+          group[col.key] = new FormControl(item[col.key], col.validators || []);
+        }
       });
 
       this.items.push(this.fb.group(group));
@@ -62,52 +83,50 @@ export class TableComponent<T extends Record<string, any>> implements OnInit {
 
     this.columns.forEach((col) => {
       if (col.validators && col.validators.length > 0) {
-        this.items.controls.forEach((control: AbstractControl) => {
-          if (control instanceof FormGroup) {
-            const formGroup = control as FormGroup;
-            const controlInGroup = formGroup.get(col.key);
-            if (controlInGroup) {
-              controlInGroup.valueChanges.subscribe(() => this.collectErrors());
-            }
+        this.items.controls.forEach((fg) => {
+          const control = fg.get(col.key);
+          if (control) {
+            const sub = control.valueChanges.subscribe(() => this.validate());
+            this.subscriptions.push(sub);
           }
         });
       }
     });
   }
 
-  get items(): FormArray {
-    return this.form.get('items') as FormArray;
-  }
-
-  collectErrors() {
+  private validate() {
     this.errorMessages = [];
 
-    this.items.controls.forEach((group, rowIndex) => {
-      if (group instanceof FormGroup) {
-        Object.keys(group.controls).forEach((key) => {
-          const control = group.get(key);
+    this.items.controls.forEach((fg) => {
+      if (fg instanceof FormGroup) {
+        Object.keys(fg.controls).forEach((key) => {
+          const control = fg.get(key);
           if (control?.errors) {
             Object.keys(control.errors).forEach((errorKey) => {
               const column = this.columns.find(col => col.key === key);
-              const label = column?.label || key;
-              let message = '';
+              const label = column?.label;
 
+              let message = '';
               switch (errorKey) {
                 case 'required':
-                  message = `${label} は必須です（行 ${rowIndex + 1}）`;
+                  message = `${label}は必須です。`;
                   break;
                 case 'email':
-                  message = `${label} の形式が正しくありません（行 ${rowIndex + 1}）`;
+                  message = `${label}の形式が正しくありません。`;
                   break;
                 case 'pattern':
-                  message = `${label} の形式が正しくありません（行 ${rowIndex + 1}）`;
+                  message = `${label}の形式が正しくありません。`;
                   break;
                 default:
-                  message = `${label} にエラーがあります（行 ${rowIndex + 1}）`;
+                  message = `${label}にエラーがあります。`;
                   break;
               }
 
-              this.errorMessages.push(message);
+              const keyColumn = this.columns.find(col => col.is_key);
+              const keyColumnKey = keyColumn?.key;
+              const keyValue = keyColumnKey ? fg.get(keyColumnKey)?.value : '';
+
+              this.errorMessages.push(`${keyColumn?.label} ${keyValue}: ${message}`);
             });
           }
         });

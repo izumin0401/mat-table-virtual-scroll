@@ -27,7 +27,7 @@ export class AppComponent {
 
   constructor() {
     this.tableColumns = [
-      { key: 'id', label: 'ID', type: 'label' },
+      { key: 'id', label: 'ID', type: 'label', is_key: true },
       { key: 'email', label: 'Email', tooltip: 'メールアドレスだよ', type: 'input', input_type: 'email', validators: [Validators.required, Validators.email] },
       { key: 'cardNumber', label: 'カード番号', type: 'input', validators: [Validators.required, Validators.pattern(/^\d{4}-\d{4}-\d{4}-\d{4}$/)] },
       { key: 'displayFlg', label: '表示フラグ', type: 'checkbox' },
