@@ -1,5 +1,6 @@
 .container {
-  margin: 20px;
+  margin-left: 20px;
+  margin-right: 20px;
   text-align: center;
   display: flex;
   flex-direction: column;
@@ -42,4 +43,23 @@ td {
   width: 100%;
   margin-top: 1.3em;
   display: block;
+}
+
+.error-messages {
+  margin-bottom: 16px;
+}
+
+.error-card {
+  background-color: #ffebee;
+  border-left: 4px solid #d32f2f; /* 赤い左ボーダー */
+  padding: 8px;
+  color: #d32f2f;
+  font-weight: bold;
+}
+
+.no-data-message {
+  text-align: center;
+  font-size: 16px;
+  color: #888;
+  padding: 20px;
 }

@@ -1,4 +1,8 @@
 <div class="container">
+  <div *ngIf="errorMessages.length > 0" class="error-messages">
+    <p *ngFor="let error of errorMessages" class="error-card">{{ error }}</p>
+  </div>
+
   <cdk-virtual-scroll-viewport itemSize="50" class="scroll-container">
     <table mat-table [dataSource]="items.controls">
       <ng-container *ngFor="let col of columns" [matColumnDef]="col.key">
@@ -24,6 +28,9 @@
         </td>
       </ng-container>
 
+      <tr *matNoDataRow class="mat-mdc-row mdc-data-table__row">
+        <td class="mat-mdc-cell mdc-data-table__cell" [attr.colspan]="columns.length">データがありません。</td>
+      </tr>
       <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
       <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
     </table>
