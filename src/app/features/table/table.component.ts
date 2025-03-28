@@ -1,6 +1,6 @@
 import { ScrollingModule } from '@angular/cdk/scrolling';
 import { CommonModule } from '@angular/common';
-import { Component, inject, Input, OnInit } from '@angular/core';
+import { Component, inject, Input, OnDestroy, OnInit } from '@angular/core';
 import { FormArray, FormBuilder, FormControl, FormGroup, ReactiveFormsModule, ValidatorFn } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCheckboxModule } from '@angular/material/checkbox';
@@ -37,7 +37,7 @@ export interface TableColumn {
   templateUrl: './table.component.html',
   styleUrl: './table.component.css'
 })
-export class TableComponent<T extends Record<string, any>> implements OnInit {
+export class TableComponent<T extends Record<string, any>> implements OnInit, OnDestroy {
   @Input() columns: TableColumn[] = [];
   @Input() data: T[] = [];
 
